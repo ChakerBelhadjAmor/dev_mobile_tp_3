@@ -11,19 +11,31 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.Nullable;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 public class MainActivity extends AppCompatActivity {
-    public static final int TEXT_REQUEST = 1;
     private TextView mReplyHeadTextView;
     private TextView mReplyTextView;
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
     public static final String EXTRA_Message="key.for.extra.MESSAGE";
     private EditText mMessageEditText;
+
+    private final ActivityResultLauncher<Intent> mSecondActivityResultLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                    (ActivityResult result) -> {
+                        if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                            String reply = result.getData().getStringExtra(SecondActivity.EXTRA_REPLY);
+                            mReplyHeadTextView.setVisibility(View.VISIBLE);
+                            mReplyTextView.setText(reply);
+                            mReplyTextView.setVisibility(View.VISIBLE);
+                        }
+                    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,26 +51,12 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
     }
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode,@Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == TEXT_REQUEST) {
-            if (resultCode == RESULT_OK) {
-                String reply = data.getStringExtra(SecondActivity.EXTRA_REPLY);
-                mReplyHeadTextView.setVisibility(View.VISIBLE);
-                mReplyTextView.setText(reply);
-                mReplyTextView.setVisibility(View.VISIBLE);
-            }
-        }
-
-    }
 
     public void launchSecondActivity(View view) {
         Log.d(LOG_TAG, "Button clicked!");
         Intent intent = new Intent(this, SecondActivity.class);
         String message = mMessageEditText.getText().toString();
         intent.putExtra(EXTRA_Message, message);
-        startActivityForResult(intent, TEXT_REQUEST);
-
+        mSecondActivityResultLauncher.launch(intent);
     }
 }
